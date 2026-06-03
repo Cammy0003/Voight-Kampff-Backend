@@ -5,23 +5,28 @@ export interface ChatMessage {
   content: string;
 }
 
-export class Prompts {
-    context: string;
+const stringifyChatMessage = (m: ChatMessage): string => `${m.role}: ${m.content}`;
 
-    constructor() {
-        this.context = "";
+const stringifyChatMessageArray = (m: ChatMessage[]): string => {
+    let res: string = "";
+    for (const chatMsg of m){
+        res += stringifyChatMessage(chatMsg) + "\n";
     }
-
-    public updateContext(context: string): void {
-        this.context = context;
-    }
-
-    public getInterviewInstructions(): string {
-        let instructions: string = prompts.Interview_Instructions;
-        let example1: string = "\nExample Conversation with Replicant:\n" + prompts.EXAMPLE_TRANSCRIPT_USER;
-        let example2: string = "\nExample Conversation with Human:\n" + prompts.EXAMPLE_TRANSCRIPT_NEW_TOPIC;
-        let currentContext: string = "\nCurrent Context of this conversation:\n" + this.context;
-        return instructions + example1 + example2 + currentContext;
-    }
-
+    return res;
 }
+
+export function getInterviewInstructions(): string {
+    let instructions: string = prompts.Interview_Instructions;
+    let example1: string = "\nExample Conversation with likely Replicant:\n"
+        + stringifyChatMessageArray(prompts.EXAMPLE_TRANSCRIPT_USER);
+    let example2: string = "\nExample Conversation with likely Human:\n"
+        + stringifyChatMessageArray(prompts.EXAMPLE_TRANSCRIPT_NEW_TOPIC);
+    let currentContextHeader: string = "\nCurrent Context of this conversation:\n";
+    let res: string = instructions + example1 + example2 + currentContextHeader;
+    // console.log(res);
+    return res;
+}
+
+
+
+
