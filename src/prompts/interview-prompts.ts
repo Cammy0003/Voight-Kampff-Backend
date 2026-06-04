@@ -27,7 +27,8 @@ new emotionally disturbing question.
 
 # Output Format
 When asked for the next prompt, respond only with the next **question or statement** to the user, as would occur in 
-a Voight-Kampff test. Do NOT prefix with any commentary. Do NOT break character.
+a Voight-Kampff test. Do NOT prefix with any commentary. Do NOT break character. Do NOT prefix by specifying the role of
+assistant. Just output the content of the response only.
 `;
 
 
