@@ -6,18 +6,27 @@ type AttainResponseResult =
     | { success: false; error: string };
 
 export class Interview {
-    private _aiClient: GoogleGenAI;
-    private _transcript: string;
-    private _questionCount: number;
+    private _aiClient!: GoogleGenAI;
+    private _transcript!: string;
+    private _questionCount!: number;
 
-    constructor() {
-        let ai_wrap: Promise<GoogleGenAI> = this.initializeGoogleGenAIClient();
-        ai_wrap.then((client) => {
-            this._aiClient = client;
-        })
+    protected constructor() {}
+
+    public static async create(): Promise<Interview> {
+        const instance = new Interview();
+        await instance.initializeInterviewClass();
+        return instance;
+    }
+
+    private async initializeInterviewClass(): Promise<void> {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         this._transcript = "";
         this._questionCount = 0;
+        this._aiClient = await this.initializeGoogleGenAIClient();
     }
+
+    get transcript(): string { return this._transcript; }
+    get questionCount(): number { return this._questionCount; }
 
     private async initializeGoogleGenAIClient(): Promise<GoogleGenAI> {
         const apiKey: string | undefined = process.env.GEMINI_API_KEY;
@@ -41,13 +50,15 @@ export class Interview {
     }
 
     public async attainLlmQuestion(): Promise<string> {
-        let interviewPrompt: string = prompts.getInterviewInstructions();
-        let responseResult: AttainResponseResult = await this.LlmResponse(interviewPrompt + this._transcript);
-        if (responseResult.success){
+        const interviewPrompt: string = prompts.getInterviewInstructions();
+        const responseResult: AttainResponseResult = await this.LlmResponse(interviewPrompt + this._transcript);
+        if ("data" in responseResult){
             this._transcript += prompts.stringifyChatMessage({ role: "assistant", content: responseResult.data });
             this._questionCount++;
+            return responseResult.data;
+        } else {
+            return responseResult.error;
         }
-        return responseResult.success ? responseResult.data : responseResult.error;
     }
 
     public attainUserResponse(userInput: string): void {
@@ -71,8 +82,5 @@ export class Interview {
             return { success: false, error: errorMessage };
         }
     }
-
-    get transcript(): string { return this._transcript; }
-    get questionCount(): number { return this._questionCount; }
 
 }

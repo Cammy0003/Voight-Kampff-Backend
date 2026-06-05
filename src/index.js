@@ -45,37 +45,38 @@ function main() {
         var interview, convoCount, _, resp, rl, answer, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    interview = new inter.Interview();
+                case 0: return [4 /*yield*/, inter.Interview.create()];
+                case 1:
+                    interview = _a.sent();
                     convoCount = 5;
                     _ = 0;
-                    _a.label = 1;
-                case 1:
-                    if (!(_ < convoCount)) return [3 /*break*/, 7];
+                    _a.label = 2;
+                case 2:
+                    if (!(_ < convoCount)) return [3 /*break*/, 8];
                     resp = interview.attainLlmQuestion();
                     resp.then(function (str) {
                         console.log(str);
                     });
                     rl = readline.createInterface({ input: node_process_1.stdin, output: node_process_1.stdout });
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, 5, 6]);
-                    return [4 /*yield*/, rl.question("User Response: ")];
+                    _a.label = 3;
                 case 3:
+                    _a.trys.push([3, 5, 6, 7]);
+                    return [4 /*yield*/, rl.question("User Response: ")];
+                case 4:
                     answer = _a.sent();
                     console.log(p.stringifyChatMessage({ role: "user", content: answer }));
-                    return [3 /*break*/, 6];
-                case 4:
+                    return [3 /*break*/, 7];
+                case 5:
                     err_1 = _a.sent();
                     console.log('error occurred: ', err_1);
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 7];
+                case 6:
                     rl.close();
                     return [7 /*endfinally*/];
-                case 6:
-                    _++;
-                    return [3 /*break*/, 1];
                 case 7:
+                    _++;
+                    return [3 /*break*/, 2];
+                case 8:
                     console.log("\n ---- INTERVIEW COMPLETE ----");
                     console.log(interview.transcript);
                     return [2 /*return*/];

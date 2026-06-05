@@ -41,15 +41,80 @@ var genai_1 = require("@google/genai");
 var prompts = require("../prompts/prompt-manager");
 var Interview = /** @class */ (function () {
     function Interview() {
-        var apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            console.error("No API KEY");
-            return;
-        }
-        this._aiClient = new genai_1.GoogleGenAI({});
-        this._transcript = "";
-        this._questionCount = 0;
     }
+    Interview.create = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var instance;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        instance = new Interview();
+                        return [4 /*yield*/, instance.initializeInterviewClass()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/, instance];
+                }
+            });
+        });
+    };
+    Interview.prototype.initializeInterviewClass = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1000); })];
+                    case 1:
+                        _b.sent();
+                        this._transcript = "";
+                        this._questionCount = 0;
+                        _a = this;
+                        return [4 /*yield*/, this.initializeGoogleGenAIClient()];
+                    case 2:
+                        _a._aiClient = _b.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Object.defineProperty(Interview.prototype, "transcript", {
+        get: function () { return this._transcript; },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Interview.prototype, "questionCount", {
+        get: function () { return this._questionCount; },
+        enumerable: false,
+        configurable: true
+    });
+    Interview.prototype.initializeGoogleGenAIClient = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var apiKey, client, error_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        apiKey = process.env.GEMINI_API_KEY;
+                        if (!apiKey) {
+                            throw new Error("CRITICAL FATAL: Local initialization failed. " +
+                                "Environment variable 'GEMINI_API_KEY' is missing or empty.");
+                        }
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        client = new genai_1.GoogleGenAI({ apiKey: apiKey });
+                        return [4 /*yield*/, client.models.list({})];
+                    case 2:
+                        _a.sent();
+                        this._aiClient = client;
+                        return [2 /*return*/, this._aiClient];
+                    case 3:
+                        error_1 = _a.sent();
+                        throw new Error("CRITICAL FATAL: Remote authentication failed with Google Gateways. " +
+                            "Reason: ".concat(error_1.message || error_1));
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
     Interview.prototype.attainLlmQuestion = function () {
         return __awaiter(this, void 0, void 0, function () {
             var interviewPrompt, responseResult;
@@ -60,11 +125,15 @@ var Interview = /** @class */ (function () {
                         return [4 /*yield*/, this.LlmResponse(interviewPrompt + this._transcript)];
                     case 1:
                         responseResult = _a.sent();
-                        if (responseResult.success) {
+                        if ("data" in responseResult) {
                             this._transcript += prompts.stringifyChatMessage({ role: "assistant", content: responseResult.data });
                             this._questionCount++;
+                            return [2 /*return*/, responseResult.data];
                         }
-                        return [2 /*return*/, responseResult.success ? responseResult.data : responseResult.error];
+                        else {
+                            return [2 /*return*/, responseResult.error];
+                        }
+                        return [2 /*return*/];
                 }
             });
         });
@@ -75,7 +144,7 @@ var Interview = /** @class */ (function () {
     };
     Interview.prototype.LlmResponse = function (message) {
         return __awaiter(this, void 0, void 0, function () {
-            var response, textResponse, error_1, errorMessage;
+            var response, textResponse, error_2, errorMessage;
             var _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -93,24 +162,14 @@ var Interview = /** @class */ (function () {
                         }
                         return [2 /*return*/, { success: true, data: textResponse }];
                     case 2:
-                        error_1 = _b.sent();
-                        errorMessage = error_1 instanceof Error ? error_1.message : "Unknown Error";
+                        error_2 = _b.sent();
+                        errorMessage = error_2 instanceof Error ? error_2.message : "Unknown Error";
                         return [2 /*return*/, { success: false, error: errorMessage }];
                     case 3: return [2 /*return*/];
                 }
             });
         });
     };
-    Object.defineProperty(Interview.prototype, "transcript", {
-        get: function () { return this._transcript; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Interview.prototype, "questionCount", {
-        get: function () { return this._questionCount; },
-        enumerable: false,
-        configurable: true
-    });
     return Interview;
 }());
 exports.Interview = Interview;
