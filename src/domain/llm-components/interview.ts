@@ -1,9 +1,7 @@
 import {GoogleGenAI} from "@google/genai";
 import * as prompts from '../prompts/prompt-manager';
 
-type AttainResponseResult =
-    | { success: true; data: string }
-    | { success: false; error: string };
+type AttainResponseResult = | { data: string } | { error: string };
 
 export class Interview {
     private _aiClient!: GoogleGenAI;
@@ -53,7 +51,7 @@ export class Interview {
         const interviewPrompt: string = prompts.getInterviewInstructions();
         const responseResult: AttainResponseResult = await this.LlmResponse(interviewPrompt + this._transcript);
         if ("data" in responseResult){
-            this._transcript += prompts.stringifyChatMessage({ role: "assistant", content: responseResult.data });
+            this._transcript += prompts.stringifyChatMessage({ role: "assistant", content: responseResult.data }) + '\n';
             this._questionCount++;
             return responseResult.data;
         } else {
@@ -63,24 +61,43 @@ export class Interview {
 
     public attainUserResponse(userInput: string): void {
         let item: prompts.ChatMessage = { role: "user", content: userInput };
-        this._transcript += prompts.stringifyChatMessage(item);
+        this._transcript += prompts.stringifyChatMessage(item) + '\n';
     }
 
     private async LlmResponse(message: string): Promise<AttainResponseResult> {
+        const maxRetries = 5;
+        let attempt = 0;
         try {
             const response = await this._aiClient.models.generateContent({
                 model: "gemini-3.5-flash",
                 contents: message,
             });
-            const textResponse: string = response.text ?? "EMPTY";
-            if (textResponse == "EMPTY"){
-                return { success: false, error: "Received an undefined response" }
+            const textResponse: string = response.text ?? "undefined";
+            if (textResponse == "undefined"){
+                return { error: "Received an undefined response"};
             }
-            return { success: true, data: textResponse };
+            return { data: textResponse};
         } catch (error) {
             const errorMessage: string = error instanceof Error ? error.message : "Unknown Error";
-            return { success: false, error: errorMessage };
+            if (errorMessage.includes("503") || errorMessage.includes("429")
+                || errorMessage.includes("UNAVAILABLE")) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    return {error: `Failed after ${maxRetries} attempts. Last error: ${errorMessage}`};
+                }
+                await this.delayResponse(attempt, maxRetries);
+            }
+            return {error: errorMessage};
         }
+
+    }
+
+    private async delayResponse(attempt: number, maxRetries: number, baseDelay=2000) {
+        const jitter = Math.random() * 1000;
+        const delayMs = (baseDelay * Math.pow(2, attempt - 1)) + jitter;
+        console.log(`\n[System] Network congestion detected. Retrying in 
+        ${(delayMs / 1000).toFixed(1)}s (Attempt ${attempt}/${maxRetries})...`);
+        return await new Promise(resolve => setTimeout(resolve, delayMs));
     }
 
 }
